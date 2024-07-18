@@ -89,7 +89,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
       setModalVisible(true);
 
       // If successful, navigate to next screen
-      router.push('/SignUpName');
+      router.push('/SignUpDetails');
       }catch(error){
         setModalMessage(`Error occured during signup with firebase`);
         setModalVisible(true);

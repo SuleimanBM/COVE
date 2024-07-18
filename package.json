@@ -48,7 +48,8 @@
     "react-native-svg": "^15.2.0",
     "react-native-svg-transformer": "^1.4.0",
     "react-native-web": "~0.19.10",
-    "reanimated-bottom-sheet": "^1.0.0-alpha.22"
+    "reanimated-bottom-sheet": "^1.0.0-alpha.22",
+    "@react-native-community/datetimepicker": "8.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

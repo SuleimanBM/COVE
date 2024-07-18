@@ -12,13 +12,17 @@ import {
   Dimensions,
 } from "react-native";
 import { ScaledSheet } from "react-native-size-matters";
-import { useChannelMessages, sendMessageToChannel } from "./API"; // Import functions from API.ts
+import { useLocalSearchParams } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { firestore } from "../firebaseConfig";
+import { useChannelMessages, sendMessageToChannel } from "./API";
 
 export type Message = {
   id: string;
   name: string;
+  userId: string; // Add userId field
   lastMessage: string;
-  avatar: any;
+  profilePicture: string | null;
   timestamp: string;
   formattimestamp: string;
 };
@@ -26,34 +30,84 @@ export type Message = {
 const width = Dimensions.get("window").width;
 
 const MainMessagePage: React.FC = () => {
+  const { spaceId, channelId } = useLocalSearchParams();
   const [inputMessage, setInputMessage] = useState<string>("");
-  const messages: Message[] = useChannelMessages("spaceID", "channelID"); // Explicitly declare messages as Message[]
-  const flatListRef = useRef<FlatList>(null); // Reference for FlatList
+  const [channelName, setChannelName] = useState<string>("");
+  const [messagesWithProfilePictures, setMessagesWithProfilePictures] =
+    useState<Message[]>([]);
 
-  // Sort messages by timestamp
-  const sortedMessages = messages.sort(
+  if (typeof spaceId !== "string" || typeof channelId !== "string") {
+    return <Text>Error: Invalid spaceId or channelId</Text>;
+  }
+
+  const messages: Message[] = useChannelMessages(spaceId, channelId);
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    const fetchChannelDetails = async () => {
+      const channelDoc = await getDoc(
+        doc(firestore, `spaces/${spaceId}/channels/${channelId}`)
+      );
+      if (channelDoc.exists()) {
+        setChannelName(channelDoc.data().name);
+      } else {
+        setChannelName("Unknown Channel");
+      }
+    };
+    fetchChannelDetails();
+  }, [spaceId, channelId]);
+
+  useEffect(() => {
+    const fetchUserProfilePictures = async () => {
+      const messagesWithProfilePictures = await Promise.all(
+        messages.map(async (msg) => {
+          const userDocRef = doc(firestore, "userDetails", msg.userId);
+          const userDocSnap = await getDoc(userDocRef);
+          const userDetails = userDocSnap.data();
+          const profilePicture = userDetails?.profilePicture ?? null;
+          return {
+            ...msg,
+            profilePicture,
+          };
+        })
+      );
+      setMessagesWithProfilePictures(messagesWithProfilePictures);
+    };
+
+    fetchUserProfilePictures();
+  }, [messages]);
+
+  const sortedMessages = messagesWithProfilePictures.sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [sortedMessages]);
 
-  // Function to handle sending a message
   const handleSendMessage = async () => {
     try {
-      await sendMessageToChannel("spaceID", "channelID", inputMessage); // Replace with actual IDs or props
-      setInputMessage(""); // Clear input field after sending message
+      await sendMessageToChannel(spaceId, channelId, inputMessage);
+      setInputMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
-      // Handle error sending message
     }
+  };
+
+  const hashStringToColor = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = `hsl(${hash % 360}, 70%, 50%)`;
+    return color;
   };
 
   const renderItem = ({ item }: { item: Message }) => (
     <View style={styles.messageItem}>
-      <Image source={item.avatar} style={styles.avatar} />
+      {item.profilePicture && (
+        <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
+      )}
       <View style={styles.messageText}>
         <View
           style={{
@@ -63,7 +117,9 @@ const MainMessagePage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Text style={styles.name}>{item.name}</Text>
+          <Text style={[styles.name, { color: hashStringToColor(item.name) }]}>
+            {item.name}
+          </Text>
           <Text style={styles.Translate}>{item.formattimestamp}</Text>
         </View>
         <Text style={styles.lastMessage}>{item.lastMessage}</Text>
@@ -77,7 +133,7 @@ const MainMessagePage: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.TopBar}>
-        <Text style={styles.Intro}>#Introduction</Text>
+        <Text style={styles.Intro}>{channelName}</Text>
       </View>
       <FlatList
         ref={flatListRef}
@@ -87,8 +143,8 @@ const MainMessagePage: React.FC = () => {
         style={{ flex: 1 }}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
-        } // Scroll to the bottom on content size change
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })} // Scroll to the bottom on layout
+        }
+        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -111,86 +167,66 @@ const MainMessagePage: React.FC = () => {
 const styles = ScaledSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    width: width,
-  },
-  searchInput: {
-    height: "40@vs",
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: "20@vs",
-    margin: "10@s",
-    paddingLeft: "15@s",
-  },
-  Intro: {
-    alignSelf: "center",
-    fontSize: "20@s",
-    marginTop: "30@vs",
-    position: "relative",
+    backgroundColor: "#fff",
   },
   TopBar: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
+    padding: "10@s",
     borderBottomWidth: 1,
-    borderBottomColor: "#c4c4c4",
+    borderBottomColor: "#ddd",
     alignItems: "center",
-    marginTop: "30@vs",
+  },
+  Intro: {
+    fontSize: "18@s",
+    fontWeight: "bold",
   },
   messageItem: {
     flexDirection: "row",
     padding: "10@s",
-    width: "100%",
-    borderBottomColor: "#eee",
+
+    borderBottomColor: "#ddd",
   },
   avatar: {
-    width: "50@s",
-    height: "50@s",
-    borderRadius: "25@s",
+    width: "40@s",
+    height: "40@s",
+    borderRadius: "20@s",
+    marginRight: "10@s",
   },
   messageText: {
-    marginLeft: "10@s",
-    justifyContent: "center",
-    width: "85%",
+    flex: 1,
   },
   name: {
-    fontSize: "10@s",
-    fontWeight: "medium",
-  },
-  lastMessage: {
-    fontSize: "14@s",
-    color: "#666",
-    display: "flex",
-    flexWrap: "wrap",
+    fontWeight: "300",
   },
   Translate: {
-    fontSize: "8@s",
+    color: "#aaa",
+  },
+  lastMessage: {
+    marginTop: "2@s",
+    fontWeight: "400",
   },
   inputContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderColor: "#eee",
     padding: "10@s",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
   },
   input: {
     flex: 1,
-    height: "40@vs",
-    borderColor: "#ccc",
+    padding: "10@s",
     borderWidth: 1,
-    borderRadius: "20@vs",
-    paddingLeft: "15@s",
-    marginTop: "0@vs",
+    borderColor: "#ddd",
+    borderRadius: "20@s",
+    marginRight: "10@s",
   },
   sendButton: {
-    marginLeft: "10@s",
-    padding: "10@s",
     backgroundColor: "#800000",
-    borderRadius: "20@vs",
+    borderRadius: "20@s",
+    justifyContent: "center",
+    paddingHorizontal: "20@s",
   },
   sendButtonText: {
     color: "#fff",
-    fontSize: "16@vs",
+    fontWeight: "bold",
   },
 });
 

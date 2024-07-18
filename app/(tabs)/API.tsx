@@ -5,8 +5,8 @@ import {
   orderBy,
   query,
   onSnapshot,
-  DocumentData,
-  QuerySnapshot,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { User } from "firebase/auth";
@@ -14,8 +14,9 @@ import { User } from "firebase/auth";
 export type Message = {
   id: string;
   name: string;
+  userId: string;
   lastMessage: string;
-  avatar: any;
+  profilePicture: string | null;
   timestamp: string;
   formattimestamp: string;
 };
@@ -27,29 +28,39 @@ export const useChannelMessages = (
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    const q = query(
-      collection(
-        firestore,
-        "spaces",
-        spaceId,
-        "channels",
-        channelId,
-        "messages"
-      ),
-      orderBy("timestamp")
-    );
+    if (!spaceId || !channelId) {
+      console.error("Invalid spaceId or channelId");
+      return;
+    }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newMessages: Message[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-        lastMessage: doc.data().lastMessage,
-        avatar: doc.data().avatar,
-        timestamp: doc.data().timestamp,
-        formattimestamp: doc.data().formattimestamp,
-      }));
-      setMessages(newMessages);
-    });
+    const unsubscribe = onSnapshot(
+      query(
+        collection(
+          firestore,
+          "spaces",
+          spaceId,
+          "channels",
+          channelId,
+          "messages"
+        ),
+        orderBy("timestamp")
+      ),
+      (snapshot) => {
+        const newMessages: Message[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name ?? "Unknown", // Provide default value
+            userId: data.userId ?? "Unknown", // Provide default value
+            lastMessage: data.lastMessage ?? "",
+            profilePicture: null, // No profile picture fetched here
+            timestamp: data.timestamp ?? "",
+            formattimestamp: data.formattimestamp ?? "",
+          };
+        });
+        setMessages(newMessages);
+      }
+    );
 
     return () => unsubscribe();
   }, [spaceId, channelId]);
@@ -68,6 +79,17 @@ export const sendMessageToChannel = async (
   }
 
   try {
+    const userDocRef = doc(firestore, "userDetails", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    const userDetails = userDocSnap.data();
+
+    if (!userDetails) {
+      throw new Error("User details not found");
+    }
+
+    const displayName = userDetails.displayName ?? "Unknown";
+    const profilePicture = userDetails.profilePicture ?? null;
+
     await addDoc(
       collection(
         firestore,
@@ -78,16 +100,19 @@ export const sendMessageToChannel = async (
         "messages"
       ),
       {
-        name: user.uid ?? "Unknown", // Use displayName or default to "Unknown"
+        name: displayName,
+        userId: user.uid, // Add userId field
         lastMessage: message,
-        avatar: user.photoURL ?? null, 
-        timestamp: new Date().toISOString(),// Use photoURL or default to null
-        formattimestamp: new Date().toISOString().slice(0, 16).replace('T', ' ') // Ensure timestamp is correctly formatted
+        profilePicture: profilePicture,
+        timestamp: new Date().toISOString(),
+        formattimestamp: new Date()
+          .toISOString()
+          .slice(0, 16)
+          .replace("T", " "),
       }
     );
   } catch (error) {
     console.error("Error sending message:", error);
     throw new Error("Failed to send message");
-    // Handle error as per your application's requirements
   }
 };

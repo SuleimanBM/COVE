@@ -14,48 +14,56 @@ export default function TabLayout() {
   const MarketIcon = require("../../../assets/images/frame2.png");
   const ProfileIcon = require("../../../assets/images/frame3.png");
   return (
-    <View style={{ flex: 1}}>
-    
-    <Tabs 
-    
-    screenOptions={({ route }) => ({
-      
-      tabBarIcon: ({ focused, color, size }) => {
-        let iconName;
+    <View style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
 
-        if (route.name === 'index') {
-          iconName = HomeIcon;
-        } else if (route.name === 'Notification') {
-          iconName = NotiIcon;
-        } else if (route.name === 'Reel') {
-          iconName = ReelIcon;
-        } else if (route.name == 'Market') {
-          iconName = MarketIcon;
-        } else {
-          iconName = ProfileIcon;
-        }
+            if (route.name === "index") {
+              iconName = HomeIcon;
+            } else if (route.name === "Notification") {
+              iconName = NotiIcon;
+            } else if (route.name === "Reel") {
+              iconName = ReelIcon;
+            } else if (route.name == "Market") {
+              iconName = MarketIcon;
+            } else {
+              iconName = ProfileIcon;
+            }
 
-        // You can return any component that you like here!
-        return <Image source={iconName} style={{ width: size, height: size, tintColor: color }} />;
-      },
-      tabBarActiveTintColor: '#800000',
-      tabBarInactiveTintColor: "grey",
-      tabBarHideOnKeyboard: true,
-      tabBarStyle:({
-        backgroundColor: "white"
-      })
-      
-    })}
-    
-    >
-      
-      <Tabs.Screen name="index" options={{headerShown: false,title: 'Home',}}/>
-      <Tabs.Screen name="Notification" options={{headerShown: false,title: 'Notification',}} />
-      <Tabs.Screen name="Reel" options={{headerShown: false,title: 'Reels',}}/>
-      <Tabs.Screen name="Market" options={{headerShown: false}}/>
-      <Tabs.Screen name="Profile" options={{headerShown: false,}}/>
-    </Tabs>
-    
+            // You can return any component that you like here!
+            return (
+              <Image
+                source={iconName}
+                style={{ width: size, height: size, tintColor: color }}
+              />
+            );
+          },
+          tabBarActiveTintColor: "#800000",
+          tabBarInactiveTintColor: "grey",
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: {
+            backgroundColor: "white",
+          },
+        })}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{ headerShown: false, title: "Home" }}
+        />
+        <Tabs.Screen
+          name="Notification"
+          options={{ headerShown: false, title: "Notification" }}
+        />
+        <Tabs.Screen
+          name="Reel"
+          options={{ headerShown: false, title: "Reels" }}
+        />
+        <Tabs.Screen name="Market" options={{ headerShown: false }} />
+        <Tabs.Screen name="Profile" options={{ headerShown: false }} />
+        <Tabs.Screen name="something" options={{ headerShown: false }} />
+      </Tabs>
     </View>
   );
 }
