@@ -1,174 +1,185 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList,Image, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
-import { ScaledSheet, vs } from 'react-native-size-matters';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  Image,
+} from "react-native";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+} from "firebase/firestore";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { firestore, auth } from "../firebaseConfig";
 
+interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: number;
+}
 
+interface User {
+  uid: string;
+  displayName: string;
+  profilePicture: string;
+}
 
+export default function ChatPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState<string>("");
+  const { chatId, friend } = useLocalSearchParams();
+  const parsedFriend: User = JSON.parse(friend as string);
 
-const messages = [
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
-  { id: '1', text: 'Hello!', user: 'other' },
-  { id: '2', text: 'Hi, how are you?', user: 'me' },
+  useEffect(() => {
+    const fetchMessages = () => {
+      const messagesQuery = query(
+        collection(firestore, "chats", chatId as string, "messages"),
+        orderBy("timestamp", "asc")
+      );
 
-  // Add more messages here
-];
+      const unsubscribe = onSnapshot(messagesQuery, (querySnapshot) => {
+        const messagesData = querySnapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() }) as Message
+        );
+        setMessages(messagesData);
+      });
 
-type Message = {
-    text: string;
-    user: string;
+      return unsubscribe;
+    };
+
+    fetchMessages();
+  }, [chatId]);
+
+  const sendMessage = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const message = {
+      senderId: user.uid,
+      text: newMessage,
+      timestamp: Date.now(),
+    };
+
+    await addDoc(
+      collection(firestore, "chats", chatId as string, "messages"),
+      message
+    );
+    setNewMessage("");
   };
 
-const MessageBubble: React.FC<{ message: Message}> = ({ message }) => (
-  <View style={[styles.messageBubble, message.user === 'me' ? styles.myMessage : styles.otherMessage]}>
-    <Text style={styles.messageText}>{message.text}</Text>
-  </View>
-);
-
-const ChatPage = () => {
-  const router = useRouter();
+  const renderMessageItem = ({ item }: { item: Message }) => {
+    const isUserMessage = item.senderId === auth.currentUser?.uid;
+    return (
+      <View
+        style={[
+          styles.messageItem,
+          isUserMessage ? styles.userMessage : styles.friendMessage,
+        ]}
+      >
+        <Text>{item.text}</Text>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-        <View style={styles.TopBar}>
-            <Image source={require("../../assets/images/Profile8.png")} style={styles.Image} />
-            <View style={styles.Icons}>
-            <Pressable>
-            <Image source={require("../../assets/images/VoiceCall.png")} style={styles.Images}/>
-            </Pressable>
-            <Pressable>
-                <Image source={require("../../assets/images/VideoCall.png")} style={styles.Images}/>
-            </Pressable>
-            </View>
-        </View>
+      <View style={styles.header}>
+        <Image
+          source={{ uri: parsedFriend.profilePicture }}
+          style={styles.profilePicture}
+        />
+        <Text style={styles.displayName}>{parsedFriend.displayName}</Text>
+      </View>
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MessageBubble message={item}  />}
-        showsVerticalScrollIndicator={false}
+        renderItem={renderMessageItem}
+        contentContainerStyle={styles.messagesContainer}
       />
-      <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  keyboardVerticalOffset={10}
-      >
       <View style={styles.inputContainer}>
-        <TextInput style={styles.input} placeholder="Type a message" />
-        <TouchableOpacity style={styles.sendButton}>
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message"
+          value={newMessage}
+          onChangeText={setNewMessage}
+        />
+        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>
       </View>
-      </KeyboardAvoidingView>
     </View>
   );
-};
-
-const styles = ScaledSheet.create({
+}
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: '10@s',
-    
-    
+    backgroundColor: "#ffffff",
+    marginTop: 20,
   },
-  TopBar:{
-    display: 'flex',
+  header: {
     flexDirection: "row",
-    justifyContent:"space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#c4c4c4",
     alignItems: "center",
-    marginTop: "30@vs"
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
   },
-  Icons:{
-    display: "flex",
-    flexDirection: 'row',
-    gap: "2@s"
+  profilePicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
   },
-  Image:{
-    height: "50@vs",
-    width: "50@s",
-    resizeMode: "contain"
+  displayName: {
+    fontWeight: "bold",
+    fontSize: 18,
   },
-  Images:{
-    height: "30@vs",
-    width: "30@s",
-    resizeMode: "contain"
+  messagesContainer: {
+    flexGrow: 1,
+    padding: 16,
   },
-  messageBubble: {
-    maxWidth: '70%',
-    padding: '10@s',
-    borderRadius: '10@vs',
-    marginVertical: '5@vs',
+  messageItem: {
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+    maxWidth: "70%",
   },
-  myMessage: {
-    backgroundColor: '#DCF8C6',
-    alignSelf: 'flex-end',
+  userMessage: {
+    backgroundColor: "#f4f4f4",
+    alignSelf: "flex-end",
   },
-  otherMessage: {
-    backgroundColor: '#ECECEC',
-    alignSelf: 'flex-start',
-  },
-  messageText: {
-    fontSize: '16@vs',
+  friendMessage: {
+    backgroundColor: "#ECECEC",
+    alignSelf: "flex-start",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderTopWidth: 1,
-    borderColor: '#eee',
-    padding: '10@s',
-
- 
+    borderTopColor: "#ccc",
+    padding: 8,
   },
   input: {
     flex: 1,
-    height: '40@vs',
-    borderColor: '#ccc',
+    padding: 10,
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: '20@vs',
-    paddingLeft: '15@s',
-    marginTop: "0@vs",
+    borderRadius: 20,
+    marginRight: 8,
   },
   sendButton: {
-    marginLeft: '10@s',
-    padding: '10@s',
-    backgroundColor: '#800000',
-    borderRadius: '20@vs',
+    backgroundColor: "#800000",
+    padding: 10,
+    borderRadius: 20,
   },
   sendButtonText: {
-    color: '#fff',
-    fontSize: '16@vs',
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
-
-export default ChatPage;

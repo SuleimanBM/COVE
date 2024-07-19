@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -10,9 +11,10 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ScaledSheet } from "react-native-size-matters";
-import { firestore,auth } from "../firebaseConfig";
+import { firestore, auth } from "../firebaseConfig";
 import { collection, query, onSnapshot, doc, getDoc } from "firebase/firestore";
 import AddChannelBottomSheet from "./AddChannel";
+import AddFriendBottomSheet from "./AddFriends"; // Import the new component
 
 export type Channel = {
   id: string;
@@ -25,7 +27,7 @@ export type Space = {
   name: string;
   description: string;
   sIcon: string | null;
-   createdBy: string;
+  createdBy: string;
   members: string[];
 };
 
@@ -33,7 +35,8 @@ export default function ChannelsScreen() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [space, setSpace] = useState<Space | null>(null);
   const [isAddChannelVisible, setIsAddChannelVisible] = useState(false);
-  const [isshowAddChannelButton, setIsshowAddChannelButton] = useState(true);
+  const [isshowAddChannelButton, setIsshowAddChannelButton] = useState(false);
+  const [isAddFriendVisible, setIsAddFriendVisible] = useState(false); // State for Add Friend BottomSheet
   const { spaceId } = useLocalSearchParams(); // Get spaceId from params
   const router = useRouter();
 
@@ -83,11 +86,14 @@ export default function ChannelsScreen() {
       params: { spaceId, channelId },
     });
   };
+
   const handle = async (channelName: string, channelDescription: string) => {
     if (!space || space.createdBy !== auth.currentUser?.uid) {
-      setIsshowAddChannelButton(false)
+      setIsshowAddChannelButton(false);
       return;
-    }}
+    }
+  };
+
   return (
     <View style={styles.container}>
       {space && (
@@ -126,19 +132,28 @@ export default function ChannelsScreen() {
           </Pressable>
         )}
       />
-    {isshowAddChannelButton? 
-    <TouchableOpacity
+      {space && space.createdBy === auth.currentUser?.uid && (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setIsAddChannelVisible(true)}
+        >
+          <Text style={styles.buttonText}>+ Add Channel</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity
         style={styles.button}
-        onPress={() => setIsAddChannelVisible(true)}
+        onPress={() => setIsAddFriendVisible(true)} // Show Add Friend BottomSheet
       >
-        <Text style={styles.buttonText}>+ Add Channel</Text>
+        <Text style={styles.buttonText}>+ Add Friend to Space</Text>
       </TouchableOpacity>
-      : null
-
-    }
       <AddChannelBottomSheet
         isVisible={isAddChannelVisible}
         onClose={() => setIsAddChannelVisible(false)}
+        spaceId={spaceId as string}
+      />
+      <AddFriendBottomSheet
+        isVisible={isAddFriendVisible}
+        onClose={() => setIsAddFriendVisible(false)}
         spaceId={spaceId as string}
       />
     </View>

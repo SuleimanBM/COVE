@@ -23,10 +23,6 @@ export default function StackLayout() {
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
           <Stack.Screen
-            name="Message"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
             name="Signin"
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
@@ -89,6 +85,10 @@ export default function StackLayout() {
           <Stack.Screen
             name="HomeSpaces"
             options={{ headerShown: false, animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen
+            name="Message"
+            options={{ headerShown: false, animation: "slide_from_right" }}
           />
         </Stack>
       </BottomSheetModalProvider>

@@ -103,42 +103,73 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
       }
      
       return (
-       
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <View style={styles.container}>
-              <Modal
-                animationType="fade"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => {
-                  Alert.alert('Modal has been closed.');
-                  setModalVisible(!modalVisible);
-                }}>
-                <View style={styles.centeredView}>
-                  <View style={styles.modalView}>
-                    <Text style={styles.modalText}>{modalMessage}</Text>
-                    <Pressable
-                      style={[styles.buttonm, styles.buttonClose]}
-                      onPress={() => setModalVisible(!modalVisible)}>
-                      <Text style={styles.textStyle}>close</Text>
-                    </Pressable>
-                  </View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={styles.container}>
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={modalVisible}
+              onRequestClose={() => {
+                Alert.alert("Modal has been closed.");
+                setModalVisible(!modalVisible);
+              }}
+            >
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <Text style={styles.modalText}>{modalMessage}</Text>
+                  <Pressable
+                    style={[styles.buttonm, styles.buttonClose]}
+                    onPress={() => setModalVisible(!modalVisible)}
+                  >
+                    <Text style={styles.textStyle}>close</Text>
+                  </Pressable>
                 </View>
-              </Modal>
-              <View style={styles.top}>
-                <View style={styles.logo}>
-                  <Image source={require("../../assets/images/LogoRed.png")} />
-                </View>
-                <Text style={styles.title}>Use email or phone</Text>
-                <View style={styles.inputContainer}>
-                  <TouchableOpacity style={[styles.button, { backgroundColor: options ? "#FAF2F2" : "transparent" }]} onPress={handleOption1}>
-                    <Text style={[styles.text, { color: options ? "black" : "#FAF2F2" }]}>Email</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, { backgroundColor: options ? 'transparent' : "#FAF2F2" }]} onPress={handleOption2}>
-                    <Text style={[styles.text, { color: options ? "#FAF2F2" : "black" }]}>Phone</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.options}>{options ? "Email" : "Phone"}</Text>
+              </View>
+            </Modal>
+            <View style={styles.top}>
+              <View style={styles.logo}>
+                <Image source={require("../../assets/images/LogoRed.png")} />
+              </View>
+              <Text style={styles.title}>Use email or phone</Text>
+              <View style={styles.inputContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    { backgroundColor: options ? "#FAF2F2" : "transparent" },
+                  ]}
+                  onPress={handleOption1}
+                >
+                  <Text
+                    style={[
+                      styles.text,
+                      { color: options ? "black" : "#FAF2F2" },
+                    ]}
+                  >
+                    Email
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    { backgroundColor: options ? "transparent" : "#FAF2F2" },
+                  ]}
+                  onPress={handleOption2}
+                >
+                  <Text
+                    style={[
+                      styles.text,
+                      { color: options ? "#FAF2F2" : "black" },
+                    ]}
+                  >
+                    Phone
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.options}>{options ? "Email" : "Phone"}</Text>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+               keyboardVerticalOffset={50}
+              >
                 <TextInput
                   style={styles.input}
                   placeholder={options ? "Email" : "Phone"}
@@ -146,21 +177,23 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
                   onChangeText={options ? setEmail : setPhone}
                   keyboardType={options ? "email-address" : "phone-pad"}
                   autoCapitalize="none"
-                  textContentType={options? "emailAddress":"password"}
+                  textContentType={options ? "emailAddress" : "password"}
                 />
-                <View>
-                  <Text style={styles.options}>Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    textContentType="password"
-                  />
-                  <Text style={{ color: "#3A3A3A", fontSize: 10 }}>Password must be 8 or more characters</Text>
-                </View>
-    
+
+                <Text style={styles.options}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                  keyboardType="visible-password"
+                  textContentType="password"
+                />
+                <Text style={{ color: "#3A3A3A", fontSize: 10 }}>
+                  Password must be 8 or more characters
+                </Text>
+
                 <View>
                   <Text style={styles.options}>Confirm password</Text>
                   <TextInput
@@ -172,14 +205,12 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
                     textContentType="password"
                   />
                 </View>
-    
-                <TouchableOpacity style={styles.next} onPress={handleSignup}>
-                  <Text style={{ color: "#ffffff" }}>Next</Text>
-                </TouchableOpacity>
-              </View>
+              </KeyboardAvoidingView>
             </View>
-          </ScrollView>
-        
+
+           
+          </View>
+        </ScrollView>
       );
     };
     

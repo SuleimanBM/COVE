@@ -4,14 +4,14 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'rea
 
 const Marketplace = () => {
   const products = [
-    { id: 1, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 2, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 3, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 4, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 5, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 6, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 7, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
-    { id: 8, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../../assets/assets/rectangle-61.png')},
+    { id: 1, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 2, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 3, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 4, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 5, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 6, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 7, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
+    { id: 8, title: 'Iphone 15 pro max 256 GB', price: 'GHS 2100.00', image: require('../../assets/assets/rectangle-61.png')},
     // Add more products as needed
   ];
 
@@ -20,7 +20,7 @@ const Marketplace = () => {
       <View style={{display: 'flex',flexDirection: 'row',justifyContent:'flex-end',gap:60,alignItems: 'center',marginRight:18}}>
       <Text style={styles.screenTitle}>Marketplace</Text>
       <TouchableOpacity onPress={()=> router.push("../SavedProducts")}>
-      <Image source={require("../../../assets/assets/group-4030.png")}   />
+      <Image source={require("../../assets/assets/group-4030.png")}   />
       </TouchableOpacity>
       </View>
       <View style={{display:'flex', flexDirection: "row", justifyContent: 'space-between',marginHorizontal: 20,marginBottom: 20}}>

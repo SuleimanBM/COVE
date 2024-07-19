@@ -7,13 +7,12 @@ import {
   Pressable,
   Image,
   TouchableOpacity,
-  Share,
-  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { ScaledSheet } from "react-native-size-matters";
 import { firestore, auth } from "../firebaseConfig";
 import { collection, query, onSnapshot, doc, getDoc } from "firebase/firestore";
-import AddChannelBottomSheet from "./AddChannel"; // Ensure this path is correct
+import AddChannelBottomSheet from "./AddChannel";
 
 export type Channel = {
   id: string;
@@ -21,7 +20,6 @@ export type Channel = {
   description: string;
   icon: string | null;
 };
-
 export type Space = {
   id: string;
   name: string;
@@ -35,37 +33,26 @@ export default function ChannelsScreen() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [space, setSpace] = useState<Space | null>(null);
   const [isAddChannelVisible, setIsAddChannelVisible] = useState(false);
-  const [isShowAddChannelButton, setIsShowAddChannelButton] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const { spaceId } = useLocalSearchParams();
+  const [isshowAddChannelButton, setIsshowAddChannelButton] = useState(true);
+  const { spaceId } = useLocalSearchParams(); // Get spaceId from params
   const router = useRouter();
 
   useEffect(() => {
     if (!spaceId) return;
 
+    // Fetch the space details
     const fetchSpaceDetails = async () => {
-      try {
-        const spaceDoc = await getDoc(doc(firestore, `spaces/${spaceId}`));
-        if (spaceDoc.exists()) {
-          const spaceData = spaceDoc.data() as Space;
-          setSpace({
-            id: spaceDoc.id,
-            name: spaceData.name,
-            description: spaceData.description,
-            sIcon: spaceData.sIcon,
-            createdBy: spaceData.createdBy,
-            members: spaceData.members,
-          });
-          setIsShowAddChannelButton(
-            spaceData.createdBy === auth.currentUser?.uid
-          );
-        } else {
-          console.log("Space not found");
-        }
-      } catch (error) {
-        console.error("Error fetching space details: ", error);
-      } finally {
-        setIsLoading(false);
+      const spaceDoc = await getDoc(doc(firestore, `spaces/${spaceId}`));
+      if (spaceDoc.exists()) {
+        const spaceData = spaceDoc.data();
+        setSpace({
+          id: spaceDoc.id,
+          name: spaceData.name,
+          description: spaceData.description,
+          sIcon: spaceData.icon,
+          createdBy: spaceData.createdBy,
+          members: spaceData.members,
+        });
       }
     };
 
@@ -92,40 +79,16 @@ export default function ChannelsScreen() {
 
   const handleChannelPress = (channelId: string) => {
     router.push({
-      pathname: "/MainMessagePage",
+      pathname: "/MainMessagePage", // Update to the correct route if needed
       params: { spaceId, channelId },
     });
   };
-
-  const shareSpaceLink = async () => {
-    if (!space) return;
-
-    try {
-      const result = await Share.share({
-        message: `Join the space "${space.name}" on our app: app://spaces/${space.id}`,
-      });
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log("Shared with activity type of: " + result.activityType);
-        } else {
-          console.log("Shared");
-        }
-      } else if (result.action === Share.dismissedAction) {
-        console.log("Dismissed");
-      }
-    } catch (error) {
-      console.error("Error sharing space link: ", error);
+  const handle = async (channelName: string, channelDescription: string) => {
+    if (!space || space.createdBy !== auth.currentUser?.uid) {
+      setIsshowAddChannelButton(false);
+      return;
     }
   };
-
-  if (isLoading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       {space && (
@@ -138,13 +101,10 @@ export default function ChannelsScreen() {
             }
             style={styles.spaceIcon}
           />
-          <View style={styles.spaceNameContainer}>
+          <View style={styles.saceName}>
             <Text style={styles.spaceName}>{space.name}</Text>
             <Text style={styles.spaceDescription}>{space.description}</Text>
           </View>
-          <Pressable style={styles.shareButton} onPress={shareSpaceLink}>
-            <Text style={styles.shareButtonText}>Share Space Link</Text>
-          </Pressable>
         </View>
       )}
       <FlatList
@@ -167,82 +127,160 @@ export default function ChannelsScreen() {
           </Pressable>
         )}
       />
-      {isShowAddChannelButton && (
+      {isshowAddChannelButton ? (
         <TouchableOpacity
           style={styles.button}
           onPress={() => setIsAddChannelVisible(true)}
         >
           <Text style={styles.buttonText}>+ Add Channel</Text>
         </TouchableOpacity>
-      )}
-      {isAddChannelVisible && ( // Ensure the component is rendered correctly
-        <AddChannelBottomSheet
-          isVisible={isAddChannelVisible}
-          onClose={() => setIsAddChannelVisible(false)}
-          spaceId={spaceId as string}
-        />
-      )}
+      ) : null}
+      <AddChannelBottomSheet
+        isVisible={isAddChannelVisible}
+        onClose={() => setIsAddChannelVisible(false)}
+        spaceId={spaceId as string}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = ScaledSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  saceName: {
+    position: "absolute",
+    backgroundColor: "#3a3a3a",
+    borderRadius: "20@ms",
+    paddingHorizontal: "10@ms",
+    top: "20@ms",
+    left: "5@ms",
   },
   spaceDetails: {
-    flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: "3@s",
+    width: "100%",
+    height: "20%",
+
+    marginTop: "25@s",
+    marginBottom: "10@s",
   },
   spaceIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  spaceNameContainer: {
-    marginLeft: 10,
+    width: "100%",
+    height: "170@ms",
+    borderTopLeftRadius: "30@ms",
+    borderTopRightRadius: "30@ms",
+    borderBottomWidth: 3,
+    borderBottomColor: "#800000",
   },
   spaceName: {
-    fontSize: 18,
+    fontSize: "15@ms",
     fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: "5@ms",
+    color: "#ffffff",
   },
   spaceDescription: {
-    fontSize: 14,
-    color: "#888",
+    fontSize: "12@ms",
+
+    textAlign: "center",
+    marginVertical: "5@ms",
+    color: "#ffffff",
   },
-  shareButton: {
-    marginLeft: "auto",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10@ms",
   },
-  shareButtonText: {
-    color: "#007AFF",
+  spacesContainer: {
+    flexDirection: "row",
+  },
+  spaceItem: {
+    marginRight: "10@ms",
+  },
+  spaceImage: {
+    width: "50@ms",
+    height: "50@ms",
+    borderRadius: "25@ms",
+  },
+  messageIconContainer: {
+    padding: "10@ms",
+  },
+  messageIcon: {
+    width: "30@ms",
+    height: "30@ms",
+  },
+  clubImage: {
+    width: "100%",
+    height: "170@ms",
+    borderTopLeftRadius: "30@ms",
+    borderTopRightRadius: "30@ms",
+  },
+  clubName: {
+    fontSize: "15@ms",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: "10@ms",
+    color: "#ffffff",
+  },
+  searchInput: {
+    backgroundColor: "#f1f1f1",
+    borderRadius: "20@ms",
+    padding: "10@ms",
+    margin: "10@ms",
+  },
+  channelContainer: {
+    padding: "10@ms",
+  },
+  channelTitle: {
+    fontSize: "20@ms",
+    fontWeight: "bold",
+    marginBottom: "5@ms",
   },
   channelItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    paddingVertical: "15@ms",
+    borderBottomWidth: 1,
+    borderBottomColor: "#800000",
   },
   channelIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    fontSize: "18@ms",
+    marginRight: "10@ms",
   },
   channelName: {
-    marginLeft: 10,
-    fontSize: 16,
+    fontSize: "18@ms",
+  },
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: "10@ms",
+    borderTopWidth: 1,
+    borderTopColor: "#ccc",
+  },
+  navItem: {
+    alignItems: "center",
+  },
+  navIcon: {
+    width: "30@ms",
+    height: "30@ms",
+  },
+  navText: {
+    fontSize: "12@ms",
+    marginTop: "5@ms",
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#8B0000",
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 50,
+    width: 280,
+    height: 50,
     alignItems: "center",
-    margin: 10,
+    marginBottom: 10,
+    alignSelf: "center",
   },
   buttonText: {
     color: "#fff",

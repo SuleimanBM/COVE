@@ -36,8 +36,7 @@ export default function SignUpDetailsScreen() {
   };
 
   const handleCreateAccount = async () => {
-    if (!username || !displayName || !dob) {
-      Alert.alert("Missing Information", "Please fill out all fields.");
+    if (!validateInputs()) {
       return;
     }
 
@@ -53,6 +52,47 @@ export default function SignUpDetailsScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const validateInputs = () => {
+    if (!username || username.length < 3 || username.length > 32) {
+      Alert.alert(
+        "Invalid Username",
+        "Username must be between 2 and 32 characters."
+      );
+      return false;
+    }
+
+    if (!displayName || displayName.length < 3 || displayName.length > 32) {
+      Alert.alert("Invalid Display Name", "Display Name cannot be empty.");
+      return false;
+    }
+
+    const age = getAge(dob);
+    if (age < 13) {
+      Alert.alert(
+        "Invalid Date of Birth",
+        "You must be at least 13 years old to create an account."
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const getAge = (birthDate : Date) => {
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      return age - 1;
+    }
+
+    return age;
   };
 
   const handleDateChange = (event: any, selectedDate: Date | undefined) => {
