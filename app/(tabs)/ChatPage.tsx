@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { ScaledSheet, vs } from 'react-native-size-matters';
-import { useRouter } from 'expo-router';
-import { translateText } from '@/app/translationService'; 
+import { translateText } from '@/translationService';
 
 const initialMessages = [
   { id: '1', text: 'Hello!', user: 'other' },
@@ -29,7 +28,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [translatedMessages, setTranslatedMessages] = useState<{ [key: string]: string }>({});
-  
+
   const handleSend = () => {
     if (inputMessage.trim()) {
       const newMessage: Message = {
@@ -137,15 +136,14 @@ const styles = ScaledSheet.create({
   },
   translateButton: {
     marginTop: '5@vs',
-    //backgroundColor: 'rgba(0, 0, 255, 0.1)',  
-    paddingVertical: '2@vs',                  
-    paddingHorizontal: '6@s',                 
+    paddingVertical: '2@vs',
+    paddingHorizontal: '6@s',
     borderRadius: '5@vs',
     alignSelf: 'flex-start',
   },
   translateButtonText: {
-    color: '#0000FF',  
-    fontSize: '12@vs', 
+    color: '#0000FF',
+    fontSize: '12@vs',
   },
   inputContainer: {
     flexDirection: 'row',

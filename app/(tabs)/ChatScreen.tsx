@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { translateText } from '@/app/translationService'; // Ensure this path is correct
+import React from 'react';
+import { View, Text, StyleSheet, Image, TextInput, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 
 const messages = [
   { id: '1', sender: 'Julia', time: '8:45 AM', text: 'Lorem ipsum dolor sit amet consectetur. Est tincidunt.' },
@@ -9,13 +8,6 @@ const messages = [
 ];
 
 export default function ChatScreen() {
-  const [translatedMessages, setTranslatedMessages] = useState<{ [key: string]: string }>({});
-
-  const handleTranslate = async (id: string, text: string) => {
-    const translatedText = await translateText(text);
-    setTranslatedMessages((prev) => ({ ...prev, [id]: translatedText }));
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -28,11 +20,8 @@ export default function ChatScreen() {
       <ScrollView style={styles.messageContainer}>
         {messages.map((message) => (
           <View key={message.id} style={message.sender === 'Me' ? styles.myMessage : styles.theirMessage}>
-            <Text style={styles.messageText}>{translatedMessages[message.id] || message.text}</Text>
+            <Text style={styles.messageText}>{message.text}</Text>
             <Text style={styles.messageTime}>{message.time}</Text>
-            <TouchableOpacity onPress={() => handleTranslate(message.id, message.text)} style={styles.translateButton}>
-              <Text style={styles.translateButtonText}>Translate</Text>
-            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -101,17 +90,6 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'right',
     marginTop: 5,
-  },
-  translateButton: {
-    marginTop: 5,
-    backgroundColor: '#800000',
-    padding: 5,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-  },
-  translateButtonText: {
-    color: '#fff',
-    fontSize: 12,
   },
   inputContainer: {
     flexDirection: 'row',
