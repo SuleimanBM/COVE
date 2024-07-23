@@ -185,7 +185,7 @@ export default function ReelProfileScreen() {
             <Text style={styles.tabText}>Reels</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.tab} onPress={pickVideo}>
-            <Text style={styles.tabText}>Pick a video from camera roll</Text>
+            <Text style={styles.tabText}>Post a reel</Text>
           </TouchableOpacity>
         </View>
 
@@ -301,6 +301,8 @@ const styles = StyleSheet.create({
   },
   tab: {
     paddingVertical: 10,
+    backgroundColor: "#800000",
+    color: "#FFFFFF",
   },
   tabText: {
     fontSize: 16,

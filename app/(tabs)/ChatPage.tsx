@@ -7,6 +7,7 @@ import {
   StyleSheet,
   FlatList,
   Image,
+  Pressable
 } from "react-native";
 import {
   collection,
@@ -17,6 +18,9 @@ import {
 } from "firebase/firestore";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { firestore, auth } from "../firebaseConfig";
+import { translateText, detectLanguage } from "@/translationService";
+import * as Localization from "expo-localization";
+
 
 interface Message {
   id: string;
@@ -36,6 +40,18 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState<string>("");
   const { chatId, friend } = useLocalSearchParams();
   const parsedFriend: User = JSON.parse(friend as string);
+   const [translatedMessages, setTranslatedMessages] = useState<{
+     [key: string]: string;
+   }>({});
+   const [translationStates, setTranslationStates] = useState<{
+     [key: string]: boolean;
+   }>({});
+   const [defaultLanguage, setDefaultLanguage] = useState<string>(
+     Localization.locale.split("-")[0]
+   );
+    const [detectedLanguages, setDetectedLanguages] = useState<{
+      [key: string]: string;
+    }>({});
 
   useEffect(() => {
     const fetchMessages = () => {
@@ -44,10 +60,18 @@ export default function ChatPage() {
         orderBy("timestamp", "asc")
       );
 
-      const unsubscribe = onSnapshot(messagesQuery, (querySnapshot) => {
+      const unsubscribe = onSnapshot(messagesQuery, async (querySnapshot) => {
         const messagesData = querySnapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() }) as Message
         );
+        // Detect language for each new message
+        for (const message of messagesData) {
+          const detectedLang = await detectLanguage(message.text);
+          setDetectedLanguages((prev) => ({
+            ...prev,
+            [message.id]: detectedLang,
+          }));
+        }
         setMessages(messagesData);
       });
 
@@ -74,6 +98,17 @@ export default function ChatPage() {
     setNewMessage("");
   };
 
+     const handleTranslate = async (id: string, text: string) => {
+       if (translationStates[id]) {
+         // If the message is already translated, revert to the original text
+         setTranslationStates((prev) => ({ ...prev, [id]: false }));
+       } else {
+         const translatedText = await translateText(text);
+         setTranslatedMessages((prev) => ({ ...prev, [id]: translatedText }));
+         setTranslationStates((prev) => ({ ...prev, [id]: true }));
+       }
+     };
+
   const renderMessageItem = ({ item }: { item: Message }) => {
     const isUserMessage = item.senderId === auth.currentUser?.uid;
     return (
@@ -83,10 +118,24 @@ export default function ChatPage() {
           isUserMessage ? styles.userMessage : styles.friendMessage,
         ]}
       >
-        <Text>{item.text}</Text>
+        <Text>
+          {translationStates[item.id]
+            ? translatedMessages[item.id]
+            : item.text}
+        </Text>
+       {detectedLanguages[item.id] !== defaultLanguage && (
+          <Pressable onPress={() => handleTranslate(item.id, item.text)}>
+            <Text style={styles.Translate}>
+              {translationStates[item.id]
+                ? "Show Original"
+                : `Translate to ${defaultLanguage}`}
+            </Text>
+          </Pressable>
+       )}
       </View>
     );
   };
+
 
   return (
     <View style={styles.container}>
@@ -149,6 +198,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
     maxWidth: "70%",
+  },
+  Translate: {
+    color: "#aaa",
   },
   userMessage: {
     backgroundColor: "#f4f4f4",

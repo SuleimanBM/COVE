@@ -168,7 +168,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
               <Text style={styles.options}>{options ? "Email" : "Phone"}</Text>
               <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-               keyboardVerticalOffset={50}
+                keyboardVerticalOffset={50}
               >
                 <TextInput
                   style={styles.input}
@@ -187,7 +187,6 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
-                  keyboardType="visible-password"
                   textContentType="password"
                 />
                 <Text style={{ color: "#3A3A3A", fontSize: 10 }}>
@@ -208,7 +207,9 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ setUser, setAuthState }) =>
               </KeyboardAvoidingView>
             </View>
 
-           
+            <TouchableOpacity style={styles.next} onPress={handleSignup}>
+              <Text style={{ color: "#ffffff" }}>Sign up</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       );

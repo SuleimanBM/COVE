@@ -16,11 +16,13 @@ import { useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import { useChannelMessages, sendMessageToChannel } from "./API";
+import { translateText, detectLanguage } from "@/translationService";
+import * as Localization from "expo-localization";
 
 export type Message = {
   id: string;
   name: string;
-  userId: string; // Add userId field
+  userId: string;
   lastMessage: string;
   profilePicture: string | null;
   timestamp: string;
@@ -35,6 +37,19 @@ const MainMessagePage: React.FC = () => {
   const [channelName, setChannelName] = useState<string>("");
   const [messagesWithProfilePictures, setMessagesWithProfilePictures] =
     useState<Message[]>([]);
+ const [translatedMessages, setTranslatedMessages] = useState<{
+   [key: string]: string;
+ }>({});
+ const [translationStates, setTranslationStates] = useState<{
+   [key: string]: boolean;
+ }>({});
+   const [detectedLanguages, setDetectedLanguages] = useState<{
+     [key: string]: string;
+   }>({});
+
+  const [defaultLanguage, setDefaultLanguage] = useState<string>(
+    Localization.locale.split("-")[0]
+  );
 
   if (typeof spaceId !== "string" || typeof channelId !== "string") {
     return <Text>Error: Invalid spaceId or channelId</Text>;
@@ -77,6 +92,19 @@ const MainMessagePage: React.FC = () => {
     fetchUserProfilePictures();
   }, [messages]);
 
+    useEffect(() => {
+      const detectLanguagesForMessages = async () => {
+        const newDetectedLanguages: { [key: string]: string } = {};
+        for (const msg of messages) {
+          const detectedLang = await detectLanguage(msg.lastMessage);
+          newDetectedLanguages[msg.id] = detectedLang;
+        }
+        setDetectedLanguages(newDetectedLanguages);
+      };
+
+      detectLanguagesForMessages();
+    }, [messages]);
+
   const sortedMessages = messagesWithProfilePictures.sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
@@ -91,6 +119,19 @@ const MainMessagePage: React.FC = () => {
       setInputMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+  };
+
+  
+
+  const handleTranslate = async (id: string, text: string) => {
+    if (translationStates[id]) {
+      // If the message is already translated, revert to the original text
+      setTranslationStates((prev) => ({ ...prev, [id]: false }));
+    } else {
+      const translatedText = await translateText(text);
+      setTranslatedMessages((prev) => ({ ...prev, [id]: translatedText }));
+      setTranslationStates((prev) => ({ ...prev, [id]: true }));
     }
   };
 
@@ -122,10 +163,20 @@ const MainMessagePage: React.FC = () => {
           </Text>
           <Text style={styles.Translate}>{item.formattimestamp}</Text>
         </View>
-        <Text style={styles.lastMessage}>{item.lastMessage}</Text>
-        <Pressable>
-          <Text style={styles.Translate}>Translate to English</Text>
-        </Pressable>
+        <Text style={styles.lastMessage}>
+          {translationStates[item.id]
+            ? translatedMessages[item.id]
+            : item.lastMessage}
+        </Text>
+            {detectedLanguages[item.id] !== defaultLanguage && (
+          <Pressable onPress={() => handleTranslate(item.id, item.lastMessage)}>
+            <Text style={styles.Translate}>
+              {translationStates[item.id]
+                ? "Show Original"
+                : `Translate to ${defaultLanguage}`}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

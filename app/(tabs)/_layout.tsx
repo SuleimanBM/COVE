@@ -90,6 +90,10 @@ export default function StackLayout() {
             name="Message"
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
+          <Stack.Screen
+            name="ForgotPassword"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
         </Stack>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
